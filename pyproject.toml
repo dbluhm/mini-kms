@@ -1,0 +1,37 @@
+[tool.poetry]
+name = "mini-kms"
+version = "0.1.0"
+description = "A mini KMS"
+authors = ["Daniel Bluhm <dbluhm@pm.me>"]
+license = "Apache-2.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+aries-askar = "^0.3.1"
+fastapi = "^0.109.2"
+pydantic = "^2.6.1"
+uvicorn = {extras = ["standard"], version = "^0.27.0.post1"}
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.1.1"
+ruff = "^0.2.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+select = ["E", "F", "C", "D"]
+
+ignore = [
+    # Google Python Doc Style
+    "D203", "D204", "D213", "D215", "D400", "D401", "D404", "D406", "D407",
+    "D408", "D409", "D413",
+]
+
+line-length = 90
+
+[tool.ruff.per-file-ignores]
+"**/{tests}/*" = ["F841", "D", "E501"]
