@@ -1,12 +1,19 @@
 """A Mini KMS server using Askar for key management."""
 
 from contextlib import asynccontextmanager
+from hashlib import sha256
 import json
+import logging
 from typing import cast
+
+from aries_askar import Key, KeyAlg, Store
+import base58
 from fastapi import Depends, FastAPI, HTTPException, status
-from aries_askar import Store, Key, KeyAlg
-from pydantic import BaseModel, Base64UrlBytes
+from pydantic import Base64UrlBytes, BaseModel
 from pydantic.types import Base64UrlEncoder
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -32,7 +39,6 @@ async def store():
 class GenerateKeyReq(BaseModel):
     """Generate key request."""
 
-    kid: str
     alg: KeyAlg
 
 
@@ -41,6 +47,19 @@ class GenerateKeyResp(BaseModel):
 
     kid: str
     jwk: dict
+    b58: str
+
+    @classmethod
+    def from_key(cls, kid: str, key: Key) -> "GenerateKeyResp":
+        """Create a response from a key."""
+        b58 = base58.b58encode(key.get_public_bytes()).decode("utf-8")
+        jwk = json.loads(key.get_jwk_public())
+        return cls(kid=kid, jwk=jwk, b58=b58)
+
+
+def derive_kid(key: Key) -> str:
+    """Derive a kid from a key."""
+    return sha256(key.get_public_bytes()).digest().hex()[:7]
 
 
 @app.post("/key/generate")
@@ -49,9 +68,10 @@ async def generate_key(
 ) -> GenerateKeyResp:
     """Generate a key and store it."""
     key = Key.generate(req.alg)
+    kid = derive_kid(key)
     async with store.session() as txn:
-        await txn.insert_key(req.kid, key)
-    return GenerateKeyResp(kid=req.kid, jwk=json.loads(key.get_jwk_public()))
+        await txn.insert_key(kid, key)
+    return GenerateKeyResp.from_key(kid, key)
 
 
 @app.get("/key/{kid}")
@@ -67,7 +87,7 @@ async def get_key(kid: str, store: Store = Depends(store)) -> GenerateKeyResp:
             status_code=status.HTTP_404_NOT_FOUND, detail="Key not found"
         )
 
-    return GenerateKeyResp(kid=kid, jwk=json.loads(key.get_jwk_public()))
+    return GenerateKeyResp.from_key(kid, key)
 
 
 @app.delete("/key/{kid}")
