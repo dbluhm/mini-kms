@@ -303,7 +303,6 @@ async def associate_key(
 
 @app.get("/key", tags=["keys"], response_description="Retrieved key")
 async def get_key_by_identifier(
-    str,
     key_uri: str,
     profile: str = Header(default=DEFAULT_PROFILE, alias=PROFILE_HEADER),
     store: Store = Depends(store),
