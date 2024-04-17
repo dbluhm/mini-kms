@@ -39,32 +39,6 @@ This will start the Mini KMS service, binding it to port 8080 on your local mach
 
 Once the service is running, you can access the API documentation and try out the API by navigating to `http://localhost:8080/docs` in your web browser. This page provides an interactive Swagger UI where you can execute API calls directly and view their responses.
 
-## API Usage Examples
-
-### Generate a Key
-
-- **POST** `/key/generate`
-    - **Request Body**: `{"alg": "Ed25519"}`
-    - **Response**: Includes `kid` (Key ID), `jwk` (Public Key in JWK format), and `b58` (Public Key in Base58 encoding).
-
-### Retrieve a Key
-
-- **GET** `/key/{kid}`
-    - Replace `{kid}` with the Key ID received from the generate call.
-    - **Response**: Same as the generate key response.
-
-### Delete a Key
-
-- **DELETE** `/key/{kid}`
-    - Replace `{kid}` with the Key ID of the key to delete.
-    - **Response**: `{"message": "Key deleted"}`
-
-### Sign a Message
-
-- **POST** `/sign`
-    - **Request Body**: `{"kid": "<Key ID>", "data": "<Base64Url encoded data>"}`
-    - **Response**: `{"sig": "<Base64Url encoded signature>"}`
-
 ## Contributing
 
 Please feel free to submit issues or pull requests on our GitHub repository. For major changes, please open an issue first to discuss what you would like to change.
