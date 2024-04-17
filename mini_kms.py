@@ -161,9 +161,7 @@ async def get_key(kid: str, store: Store = Depends(store)) -> GenerateKeyResp:
     if key_entry:
         key = cast(Key, key_entry.key)
     else:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Key not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Key not found")
 
     return GenerateKeyResp.from_key(kid, key)
 
@@ -199,9 +197,7 @@ async def sign(req: SigReq, store: Store = Depends(store)) -> SigResp:
     if key_entry:
         key = cast(Key, key_entry.key)
     else:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Key not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Key not found")
 
     sig = key.sign_message(req.data)
     return SigResp(sig=Base64UrlEncoder.encode(sig))
