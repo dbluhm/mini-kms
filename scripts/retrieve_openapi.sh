@@ -27,4 +27,4 @@ for _ in $(seq 1 "$WAIT_ATTEMPTS"); do
     fi
 done
 
-curl --output "${OUTPUT}" "${URL}"
+curl "${URL}" | jq > "${OUTPUT}"

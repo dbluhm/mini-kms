@@ -1,1 +1,714 @@
-{"openapi":"3.1.0","info":{"title":"Mini KMS","summary":"A lightweight service for secure key management using Aries Askar","version":"0.1.1"},"paths":{"/profile":{"post":{"tags":["profiles"],"summary":"Create Profile","description":"Create a new Profile.","operationId":"create_profile_profile_post","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/ProfileReq"}}},"required":true},"responses":{"200":{"description":"Profile create response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ProfileResp"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/profiles":{"get":{"tags":["profiles"],"summary":"Get Profiles","description":"Get available profiles.","operationId":"get_profiles_profiles_get","responses":{"200":{"description":"Profile list","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ProfileList"}}}}}}},"/profile/{name}":{"delete":{"tags":["profiles"],"summary":"Delete Profile","description":"Delete a profile.","operationId":"delete_profile_profile__name__delete","parameters":[{"name":"name","in":"path","required":true,"schema":{"type":"string","title":"Name"}}],"responses":{"200":{"description":"Success bool","content":{"application/json":{"schema":{}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/key/generate":{"post":{"tags":["keys"],"summary":"Generate Key","description":"Generate a key and store it.","operationId":"generate_key_key_generate_post","parameters":[{"name":"X-Profile","in":"header","required":false,"schema":{"type":"string","default":"default","title":"X-Profile"}}],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/GenerateKeyReq"}}}},"responses":{"200":{"description":"The generated key","content":{"application/json":{"schema":{"$ref":"#/components/schemas/GenerateKeyResp"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/key/{kid}/associate":{"post":{"tags":["keys"],"summary":"Associate Key","description":"Associate a key with identifiers.","operationId":"associate_key_key__kid__associate_post","parameters":[{"name":"kid","in":"path","required":true,"schema":{"type":"string","title":"Kid"}},{"name":"X-Profile","in":"header","required":false,"schema":{"type":"string","default":"default","title":"X-Profile"}}],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/AssociateKeyReq"}}}},"responses":{"200":{"description":"Summary of associated identifiers","content":{"application/json":{"schema":{"$ref":"#/components/schemas/AssociateKeyResp"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/key":{"get":{"tags":["keys"],"summary":"Get Key By Identifier","description":"Retrieve a key by identifier key_uri.","operationId":"get_key_by_identifier_key_get","parameters":[{"name":"key_uri","in":"query","required":true,"schema":{"type":"string","title":"Key Uri"}},{"name":"X-Profile","in":"header","required":false,"schema":{"type":"string","default":"default","title":"X-Profile"}}],"responses":{"200":{"description":"Retrieved key","content":{"application/json":{"schema":{"$ref":"#/components/schemas/GenerateKeyResp"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/keys":{"get":{"tags":["keys"],"summary":"Get All Keys","description":"Return list of all keys.\n\nWARNING: This will return at most 100 keys. Do not rely on this in production.","operationId":"get_all_keys_keys_get","parameters":[{"name":"X-Profile","in":"header","required":false,"schema":{"type":"string","default":"default","title":"X-Profile"}}],"responses":{"200":{"description":"List of keys","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/GenerateKeyResp"},"title":"Response Get All Keys Keys Get"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/key/{kid}":{"get":{"tags":["keys"],"summary":"Get Key","description":"Get a key by its kid.","operationId":"get_key_key__kid__get","parameters":[{"name":"kid","in":"path","required":true,"schema":{"type":"string","title":"Kid"}},{"name":"X-Profile","in":"header","required":false,"schema":{"type":"string","default":"default","title":"X-Profile"}}],"responses":{"200":{"description":"Retrieved key","content":{"application/json":{"schema":{"$ref":"#/components/schemas/GenerateKeyResp"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}},"delete":{"tags":["keys"],"summary":"Delete Key","description":"Delete a key by its kid.","operationId":"delete_key_key__kid__delete","parameters":[{"name":"kid","in":"path","required":true,"schema":{"type":"string","title":"Kid"}},{"name":"X-Profile","in":"header","required":false,"schema":{"type":"string","default":"default","title":"X-Profile"}}],"responses":{"200":{"description":"Deleted kid","content":{"application/json":{"schema":{}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/sign":{"post":{"tags":["ops"],"summary":"Sign","description":"Sign a message with a key.","operationId":"sign_sign_post","parameters":[{"name":"X-Profile","in":"header","required":false,"schema":{"type":"string","default":"default","title":"X-Profile"}}],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/SigReq"}}}},"responses":{"200":{"description":"Signed message in base64url encoding","content":{"application/json":{"schema":{"$ref":"#/components/schemas/SigResp"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}}},"components":{"schemas":{"AssociateKeyReq":{"properties":{"key_uri":{"type":"string","pattern":"did:([a-z0-9]+):((?:[a-zA-Z0-9._%-]*:)*[a-zA-Z0-9._%-]+)#.*","title":"Key Uri","examples":["did:example:1234#key-1"]}},"type":"object","required":["key_uri"],"title":"AssociateKeyReq","description":"Associate Key Request body."},"AssociateKeyResp":{"properties":{"key_uri":{"type":"string","title":"Key Uri"},"kid":{"type":"string","title":"Kid"}},"type":"object","required":["key_uri","kid"],"title":"AssociateKeyResp","description":"Associate Key Response body."},"GenerateKeyReq":{"properties":{"alg":{"$ref":"#/components/schemas/KeyAlg"}},"type":"object","required":["alg"],"title":"GenerateKeyReq","description":"Generate key request."},"GenerateKeyResp":{"properties":{"kid":{"type":"string","title":"Kid"},"jwk":{"type":"object","title":"Jwk"},"b58":{"type":"string","title":"B58"}},"type":"object","required":["kid","jwk","b58"],"title":"GenerateKeyResp","description":"Generated key response."},"HTTPValidationError":{"properties":{"detail":{"items":{"$ref":"#/components/schemas/ValidationError"},"type":"array","title":"Detail"}},"type":"object","title":"HTTPValidationError"},"KeyAlg":{"type":"string","enum":["a128gcm","a256gcm","a128cbchs256","a256cbchs512","a128kw","a256kw","bls12381g1","bls12381g2","bls12381g1g2","c20p","xc20p","ed25519","x25519","k256","p256","p384"],"title":"KeyAlg"},"ProfileList":{"properties":{"profiles":{"items":{"type":"string"},"type":"array","title":"Profiles"}},"type":"object","required":["profiles"],"title":"ProfileList","description":"List of Profiles."},"ProfileReq":{"properties":{"name":{"type":"string","title":"Name"}},"type":"object","required":["name"],"title":"ProfileReq","description":"Profile create request."},"ProfileResp":{"properties":{"name":{"type":"string","title":"Name"}},"type":"object","required":["name"],"title":"ProfileResp","description":"Profile create response."},"SigReq":{"properties":{"kid":{"type":"string","title":"Kid"},"data":{"type":"string","format":"base64url","title":"Data"}},"type":"object","required":["kid","data"],"title":"SigReq","description":"KID and Message to be signed in base64url encoding."},"SigResp":{"properties":{"sig":{"type":"string","format":"base64url","title":"Sig"}},"type":"object","required":["sig"],"title":"SigResp","description":"Signed message in base64url encoding."},"ValidationError":{"properties":{"loc":{"items":{"anyOf":[{"type":"string"},{"type":"integer"}]},"type":"array","title":"Location"},"msg":{"type":"string","title":"Message"},"type":{"type":"string","title":"Error Type"}},"type":"object","required":["loc","msg","type"],"title":"ValidationError"}}}}
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Mini KMS",
+    "summary": "A lightweight service for secure key management using Aries Askar",
+    "version": "0.1.1"
+  },
+  "paths": {
+    "/profile": {
+      "post": {
+        "tags": [
+          "profiles"
+        ],
+        "summary": "Create Profile",
+        "description": "Create a new Profile.",
+        "operationId": "create_profile_profile_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Profile create response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResp"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profiles": {
+      "get": {
+        "tags": [
+          "profiles"
+        ],
+        "summary": "Get Profiles",
+        "description": "Get available profiles.",
+        "operationId": "get_profiles_profiles_get",
+        "responses": {
+          "200": {
+            "description": "Profile list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profile/{name}": {
+      "delete": {
+        "tags": [
+          "profiles"
+        ],
+        "summary": "Delete Profile",
+        "description": "Delete a profile.",
+        "operationId": "delete_profile_profile__name__delete",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success bool",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/key/generate": {
+      "post": {
+        "tags": [
+          "keys"
+        ],
+        "summary": "Generate Key",
+        "description": "Generate a key and store it.",
+        "operationId": "generate_key_key_generate_post",
+        "parameters": [
+          {
+            "name": "X-Profile",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "default",
+              "title": "X-Profile"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateKeyReq"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The generated key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateKeyResp"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/key/{kid}/associate": {
+      "post": {
+        "tags": [
+          "keys"
+        ],
+        "summary": "Associate Key",
+        "description": "Associate a key with identifiers.",
+        "operationId": "associate_key_key__kid__associate_post",
+        "parameters": [
+          {
+            "name": "kid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kid"
+            }
+          },
+          {
+            "name": "X-Profile",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "default",
+              "title": "X-Profile"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssociateKeyReq"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Summary of associated identifiers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssociateKeyResp"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/key": {
+      "get": {
+        "tags": [
+          "keys"
+        ],
+        "summary": "Get Key By Alias",
+        "description": "Retrieve a key by identifier alias.",
+        "operationId": "get_key_by_alias_key_get",
+        "parameters": [
+          {
+            "name": "alias",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Alias"
+            }
+          },
+          {
+            "name": "X-Profile",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "default",
+              "title": "X-Profile"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Retrieved key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateKeyResp"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/keys": {
+      "get": {
+        "tags": [
+          "keys"
+        ],
+        "summary": "Get All Keys",
+        "description": "Return list of all keys.\n\nWARNING: This will return at most 100 keys. Do not rely on this in production.",
+        "operationId": "get_all_keys_keys_get",
+        "parameters": [
+          {
+            "name": "X-Profile",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "default",
+              "title": "X-Profile"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of keys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GenerateKeyResp"
+                  },
+                  "title": "Response Get All Keys Keys Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/key/{kid}": {
+      "get": {
+        "tags": [
+          "keys"
+        ],
+        "summary": "Get Key",
+        "description": "Get a key by its kid.",
+        "operationId": "get_key_key__kid__get",
+        "parameters": [
+          {
+            "name": "kid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kid"
+            }
+          },
+          {
+            "name": "X-Profile",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "default",
+              "title": "X-Profile"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Retrieved key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateKeyResp"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "keys"
+        ],
+        "summary": "Delete Key",
+        "description": "Delete a key by its kid.",
+        "operationId": "delete_key_key__kid__delete",
+        "parameters": [
+          {
+            "name": "kid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kid"
+            }
+          },
+          {
+            "name": "X-Profile",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "default",
+              "title": "X-Profile"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted kid",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sign": {
+      "post": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Sign",
+        "description": "Sign a message with a key.",
+        "operationId": "sign_sign_post",
+        "parameters": [
+          {
+            "name": "X-Profile",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "default",
+              "title": "X-Profile"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SigReq"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed message in base64url encoding",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SigResp"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AssociateKeyReq": {
+        "properties": {
+          "alias": {
+            "type": "string",
+            "title": "Alias",
+            "examples": [
+              "did:example:1234#key-1"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "alias"
+        ],
+        "title": "AssociateKeyReq",
+        "description": "Associate Key Request body."
+      },
+      "AssociateKeyResp": {
+        "properties": {
+          "alias": {
+            "type": "string",
+            "title": "Alias"
+          },
+          "kid": {
+            "type": "string",
+            "title": "Kid"
+          }
+        },
+        "type": "object",
+        "required": [
+          "alias",
+          "kid"
+        ],
+        "title": "AssociateKeyResp",
+        "description": "Associate Key Response body."
+      },
+      "GenerateKeyReq": {
+        "properties": {
+          "alg": {
+            "$ref": "#/components/schemas/KeyAlg"
+          }
+        },
+        "type": "object",
+        "required": [
+          "alg"
+        ],
+        "title": "GenerateKeyReq",
+        "description": "Generate key request."
+      },
+      "GenerateKeyResp": {
+        "properties": {
+          "kid": {
+            "type": "string",
+            "title": "Kid"
+          },
+          "jwk": {
+            "type": "object",
+            "title": "Jwk"
+          },
+          "b58": {
+            "type": "string",
+            "title": "B58"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kid",
+          "jwk",
+          "b58"
+        ],
+        "title": "GenerateKeyResp",
+        "description": "Generated key response."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "KeyAlg": {
+        "type": "string",
+        "enum": [
+          "a128gcm",
+          "a256gcm",
+          "a128cbchs256",
+          "a256cbchs512",
+          "a128kw",
+          "a256kw",
+          "bls12381g1",
+          "bls12381g2",
+          "bls12381g1g2",
+          "c20p",
+          "xc20p",
+          "ed25519",
+          "x25519",
+          "k256",
+          "p256",
+          "p384"
+        ],
+        "title": "KeyAlg"
+      },
+      "ProfileList": {
+        "properties": {
+          "profiles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Profiles"
+          }
+        },
+        "type": "object",
+        "required": [
+          "profiles"
+        ],
+        "title": "ProfileList",
+        "description": "List of Profiles."
+      },
+      "ProfileReq": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ProfileReq",
+        "description": "Profile create request."
+      },
+      "ProfileResp": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ProfileResp",
+        "description": "Profile create response."
+      },
+      "SigReq": {
+        "properties": {
+          "kid": {
+            "type": "string",
+            "title": "Kid"
+          },
+          "data": {
+            "type": "string",
+            "format": "base64url",
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kid",
+          "data"
+        ],
+        "title": "SigReq",
+        "description": "KID and Message to be signed in base64url encoding."
+      },
+      "SigResp": {
+        "properties": {
+          "sig": {
+            "type": "string",
+            "format": "base64url",
+            "title": "Sig"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sig"
+        ],
+        "title": "SigResp",
+        "description": "Signed message in base64url encoding."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
