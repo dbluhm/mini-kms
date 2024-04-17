@@ -37,7 +37,7 @@ app = FastAPI(
     lifespan=setup_store,
     title="Mini KMS",
     summary="A lightweight service for secure key management using Aries Askar",
-    version="0.1.0",
+    version="0.1.1",
 )
 
 
