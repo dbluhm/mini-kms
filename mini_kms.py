@@ -3,12 +3,13 @@
 from contextlib import asynccontextmanager
 import json
 import logging
-from typing import List, Optional, cast
+from typing import Any, List, Optional, Tuple, cast
 
 from aries_askar import AskarError, AskarErrorCode, Key, KeyAlg, Store
 import base58
-from fastapi import Depends, FastAPI, Header, Request
+from fastapi import Depends, FastAPI, Header, Request, status
 from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from pydantic import Base64UrlBytes, BaseModel, Field
 from pydantic.types import Base64UrlEncoder
 
@@ -126,6 +127,35 @@ async def problem_details_exception_handler(_: Request, exc: ProblemDetailsExcep
         status_code=details.status,
         content=details.model_dump(exclude_none=True),
         headers={"Content-Type": "application/problem+json"},
+    )
+
+
+class ValidationErrorInfo(BaseModel):
+    """Validation error info."""
+
+    loc: Tuple[str, Any]
+    msg: str
+    type: str
+
+
+class ValidationProblemDetails(ProblemDetails):
+    """Problem details for validation errors."""
+
+    errors: List[ValidationErrorInfo]
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Handle request validation errors."""
+    details = ValidationProblemDetails(
+        status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        title="Validation Error",
+        detail="Failed to validate request body",
+        errors=[ValidationErrorInfo.model_validate(error) for error in exc.errors()],
+    )
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content=details.model_dump(exclude_none=True),
     )
 
 
