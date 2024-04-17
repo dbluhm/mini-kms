@@ -252,16 +252,15 @@ async def generate_key(
 class AssociateKeyReq(BaseModel):
     """Associate Key Request body."""
 
-    key_uri: str = Field(
+    alias: str = Field(
         examples=["did:example:1234#key-1"],
-        pattern=r"did:([a-z0-9]+):((?:[a-zA-Z0-9._%-]*:)*[a-zA-Z0-9._%-]+)#.*",
     )
 
 
 class AssociateKeyResp(BaseModel):
     """Associate Key Response body."""
 
-    key_uri: str
+    alias: str
     kid: str
 
 
@@ -278,39 +277,39 @@ async def associate_key(
 ) -> AssociateKeyResp:
     """Associate a key with identifiers."""
     LOGGER.debug(
-        "Associating key %s with: profile: %s, key_uri: %s",
+        "Associating key %s with: profile: %s, alias: %s",
         kid,
         profile,
-        req.key_uri,
+        req.alias,
     )
     async with store.transaction(profile=profile) as txn:
         entry = await txn.fetch_key(kid, for_update=True)
         if not entry:
             raise ProblemDetailsException.NotFound("Key not found")
 
-        did = req.key_uri.split("#", 1)[0]
+        did = req.alias.split("#", 1)[0]
         await txn.update_key(
             kid,
             tags={
-                "key_uri": req.key_uri,
+                "alias": req.alias,
                 "did": did,
             },
         )
         await txn.commit()
 
-    return AssociateKeyResp(key_uri=req.key_uri, kid=kid)
+    return AssociateKeyResp(alias=req.alias, kid=kid)
 
 
 @app.get("/key", tags=["keys"], response_description="Retrieved key")
-async def get_key_by_identifier(
-    key_uri: str,
+async def get_key_by_alias(
+    alias: str,
     profile: str = Header(default=DEFAULT_PROFILE, alias=PROFILE_HEADER),
     store: Store = Depends(store),
 ) -> GenerateKeyResp:
-    """Retrieve a key by identifier key_uri."""
-    LOGGER.debug("Retrieving key with: profile: %s, key_uri: %s", profile, key_uri)
+    """Retrieve a key by identifier alias."""
+    LOGGER.debug("Retrieving key with: profile: %s, alias: %s", profile, alias)
     async with store.session(profile=profile) as txn:
-        entries = await txn.fetch_all_keys(tag_filter={"key_uri": key_uri}, limit=1)
+        entries = await txn.fetch_all_keys(tag_filter={"alias": alias}, limit=1)
         if not entries:
             raise ProblemDetailsException.NotFound("Key not found")
 
