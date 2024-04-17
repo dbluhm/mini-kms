@@ -3,11 +3,13 @@
 from contextlib import asynccontextmanager
 import json
 import logging
-from typing import List, cast
+from typing import Any, List, Optional, Tuple, cast
 
 from aries_askar import AskarError, AskarErrorCode, Key, KeyAlg, Store
 import base58
-from fastapi import Depends, FastAPI, HTTPException, Header, status
+from fastapi import Depends, FastAPI, Header, Request, status
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from pydantic import Base64UrlBytes, BaseModel, Field
 from pydantic.types import Base64UrlEncoder
 
@@ -44,6 +46,119 @@ async def store():
     yield app.state.store
 
 
+class ProblemDetails(BaseModel):
+    """RFC 9457 Problem Details."""
+
+    type: Optional[str] = None
+    status: int
+    title: str
+    detail: Optional[str] = None
+
+    def __str__(self) -> str:
+        """Return short string representation of problem details object."""
+        return f"{self.status}: {self.title}"
+
+    @classmethod
+    def NotFound(cls, detail: Optional[str] = None) -> "ProblemDetails":
+        """Not Found problem details."""
+        return cls(status=404, title="Not Found", detail=detail)
+
+    @classmethod
+    def InternalServerError(cls, detail: Optional[str] = None) -> "ProblemDetails":
+        """Internal Error problem details."""
+        return cls(
+            status=500,
+            title="Internal Server Error",
+            detail=detail,
+        )
+
+    @classmethod
+    def BadRequest(cls, detail: Optional[str] = None) -> "ProblemDetails":
+        """Bad Request problem details."""
+        return cls(
+            status=400,
+            title="Bad Request",
+            detail=detail,
+        )
+
+
+class ProblemDetailsException(Exception):
+    """Exception wrapper for problem details."""
+
+    def __init__(self, details: ProblemDetails):
+        """Initiliaze exception."""
+        self.details = details
+
+    @classmethod
+    def NotFound(cls, detail: Optional[str] = None) -> "ProblemDetailsException":
+        """Not Found problem details."""
+        return cls(ProblemDetails(status=404, title="Not Found", detail=detail))
+
+    @classmethod
+    def InternalServerError(
+        cls, detail: Optional[str] = None
+    ) -> "ProblemDetailsException":
+        """Internal Error problem details."""
+        return cls(
+            ProblemDetails(
+                status=500,
+                title="Internal Server Error",
+                detail=detail,
+            )
+        )
+
+    @classmethod
+    def BadRequest(cls, detail: Optional[str] = None) -> "ProblemDetailsException":
+        """Bad Request problem details."""
+        return cls(
+            ProblemDetails(
+                status=400,
+                title="Bad Request",
+                detail=detail,
+            )
+        )
+
+
+@app.exception_handler(ProblemDetailsException)
+async def problem_details_exception_handler(_: Request, exc: ProblemDetailsException):
+    """Handle ProblemDetails exceptions."""
+    details = exc.details
+    return JSONResponse(
+        status_code=details.status,
+        content=details.model_dump(exclude_none=True),
+        headers={"Content-Type": "application/problem+json"},
+    )
+
+
+class ValidationErrorInfo(BaseModel):
+    """Validation error info."""
+
+    loc: Tuple[str, Any]
+    msg: str
+    type: str
+
+
+class ValidationProblemDetails(ProblemDetails):
+    """Problem details for validation errors."""
+
+    errors: List[ValidationErrorInfo]
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Handle request validation errors."""
+    details = ValidationProblemDetails(
+        status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        title="Validation Error",
+        detail="Failed to validate request body",
+        errors=[ValidationErrorInfo.model_validate(error) for error in exc.errors()],
+    )
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content=details.model_dump(exclude_none=True),
+    )
+
+
 class ProfileReq(BaseModel):
     """Profile create request."""
 
@@ -63,12 +178,12 @@ async def create_profile(req: ProfileReq, store: Store = Depends(store)) -> Prof
         name = await store.create_profile(req.name)
     except AskarError as error:
         if error.code == AskarErrorCode.DUPLICATE:
-            raise HTTPException(
-                status_code=400, detail=f"Profile with name '{req.name}' already exists"
+            raise ProblemDetailsException.BadRequest(
+                f"Profile with name '{req.name}' already exists"
             )
         else:
-            raise HTTPException(
-                status_code=500, detail="Could not create profile"
+            raise ProblemDetailsException.InternalServerError(
+                "Could not create profile"
             ) from error
 
     return ProfileResp(name=name)
@@ -171,9 +286,7 @@ async def associate_key(
     async with store.transaction(profile=profile) as txn:
         entry = await txn.fetch_key(kid, for_update=True)
         if not entry:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Key not found"
-            )
+            raise ProblemDetailsException.NotFound("Key not found")
 
         did = req.key_uri.split("#", 1)[0]
         await txn.update_key(
@@ -190,7 +303,6 @@ async def associate_key(
 
 @app.get("/key", tags=["keys"], response_description="Retrieved key")
 async def get_key_by_identifier(
-    str,
     key_uri: str,
     profile: str = Header(default=DEFAULT_PROFILE, alias=PROFILE_HEADER),
     store: Store = Depends(store),
@@ -200,9 +312,7 @@ async def get_key_by_identifier(
     async with store.session(profile=profile) as txn:
         entries = await txn.fetch_all_keys(tag_filter={"key_uri": key_uri}, limit=1)
         if not entries:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Key not found"
-            )
+            raise ProblemDetailsException.NotFound("Key not found")
 
         kid = cast(str, entries[0].name)
         key = cast(Key, entries[0].key)
@@ -240,7 +350,7 @@ async def get_key(
     if key_entry:
         key = cast(Key, key_entry.key)
     else:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Key not found")
+        raise ProblemDetailsException.NotFound("Key not found")
 
     return GenerateKeyResp.from_key(kid, key)
 
@@ -284,7 +394,7 @@ async def sign(
     if key_entry:
         key = cast(Key, key_entry.key)
     else:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Key not found")
+        raise ProblemDetailsException.NotFound("Key not found")
 
     sig = key.sign_message(req.data)
     return SigResp(sig=Base64UrlEncoder.encode(sig))
