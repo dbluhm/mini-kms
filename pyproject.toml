@@ -16,7 +16,7 @@ base58 = "^2.1.1"
 
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.4.1"
+ruff = "^0.4.2"
 pre-commit = "^3.6.0"
 
 [build-system]
