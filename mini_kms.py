@@ -536,7 +536,7 @@ async def retrieve_credential_by_given_id(
     tags=["vc-holder"],
     response_description="Retrieved credential",
 )
-async def delete_credentail(
+async def delete_credential(
     record_id: str,
     profile: str = Header(default=DEFAULT_PROFILE, alias=PROFILE_HEADER),
     store: Store = Depends(store),
