@@ -436,11 +436,11 @@ async def store_credential(
     tags = {
         attr: value
         for attr in (
-            "context",
-            "type",
-            "schema",
-            "subject",
-            "proof_type",
+            "contexts",
+            "expanded_types",
+            "schema_ids",
+            "subject_ids",
+            "proof_types",
             "issuer_id",
             "given_id",
         )
@@ -461,8 +461,8 @@ def entry_to_vc_record(entry: Entry) -> VCRecord:
     """Convert an Askar stored entry into a VC record."""
     tags = cast(dict, entry.tags)
     cred_tags = {name[5:]: value for name, value in tags if name.startswith("cstm:")}
-    contexts = tags.get("context", set())
-    types = tags.get("types", set())
+    contexts = tags.get("contexts", set())
+    types = tags.get("expanded_types", set())
     schema_ids = tags.get("schema_ids", set())
     subject_ids = tags.get("subject_ids", set())
     proof_types = tags.get("proof_types", set())
@@ -619,11 +619,11 @@ async def search_credentials(  # noqa: C901
         return result
 
     query = []
-    _match_any(query, "context", req.contexts)
-    _match_any(query, "type", req.types)
-    _match_any(query, "schema", req.schema_ids)
-    _match_any(query, "subject", req.subject_ids)
-    _match_any(query, "proof_type", req.proof_types)
+    _match_any(query, "contexts", req.contexts)
+    _match_any(query, "expanded_types", req.types)
+    _match_any(query, "schema_ids", req.schema_ids)
+    _match_any(query, "subject_ids", req.subject_ids)
+    _match_any(query, "proof_types", req.proof_types)
     if req.issuer_id:
         query.append({"issuer_id": req.issuer_id})
     if req.given_id:
