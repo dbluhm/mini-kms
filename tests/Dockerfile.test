@@ -1,0 +1,17 @@
+FROM python:3.9-slim
+
+# Install dependencies
+WORKDIR /app
+COPY requirements.test.txt .
+RUN pip install -r requirements.test.txt
+
+# Copy test files
+COPY tests/ ./tests/
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV API_HOST=mini-kms
+ENV API_PORT=80
+
+# Command to run tests
+CMD ["pytest", "-v", "tests/integration/"]

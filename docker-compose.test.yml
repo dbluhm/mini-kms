@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  mini-kms:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/docs"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  tests:
+    build:
+      context: .
+      dockerfile: tests/Dockerfile.test
+    depends_on:
+      mini-kms:
+        condition: service_healthy
+    environment:
+      - API_HOST=mini-kms
+      - API_PORT=80
