@@ -8,10 +8,10 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-aries-askar = "^0.3.2"
-fastapi = "^0.115.6"
-pydantic = "^2.10.3"
-uvicorn = {extras = ["standard"], version = "^0.32.1"}
+aries-askar = "^0.4.2"
+fastapi = "^0.115.7"
+pydantic = "^2.10.6"
+uvicorn = {extras = ["standard"], version = "^0.34.0"}
 base58 = "^2.1.1"
 
 
